@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TasksStatusEnum;
 use App\Models\Task;
 use App\Services\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -19,19 +22,29 @@ class TaskController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        //
+        $request->validate(
+            [
+                'title' => ['required', 'min:3', 'string'],
+                'description' => ['nullable', 'min:5', 'string'],
+            ]
+        );
+
+        $task = DB::transaction(function () use ($request) {
+            $task = Task::create([
+                'owner_id' => 1,
+                'title' => $request->title,
+                'description' => $request->description,
+                'status' => TasksStatusEnum::pending,
+            ]);
+
+            return $task;
+        });
+
+        return ApiResponse::success(['task' => $task]);
     }
 
     /**
